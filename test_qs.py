@@ -15,4 +15,3 @@ def test_recursive_factorization():
     factors = factor_integer(n, verbose=False, B=300)
     assert math.prod(factors) == n
     assert factors == [1009, 1013]
-

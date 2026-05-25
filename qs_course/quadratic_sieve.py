@@ -421,6 +421,13 @@ def quadratic_sieve(
     for attempt in range(4):
         small_factor, factor_base, roots_by_prime = build_factor_base(N, current_B)
         if small_factor is not None:
+            follow.result = {
+                "factor": small_factor,
+                "other_factor": N // small_factor,
+                "check_product": small_factor * (N // small_factor),
+            }
+            if save_json is not None:
+                follow.save_json(save_json)
             return small_factor
         if not factor_base:
             raise RuntimeError("Empty factor base; choose a larger B")
