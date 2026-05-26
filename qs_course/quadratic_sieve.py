@@ -18,7 +18,7 @@ else:
 
 @dataclass
 class QSParameters:
-    """Parameters estimated for one input N."""
+    """Параметры, оцененные для входного числа N."""
 
     n_bits: int
     ln_n: float
@@ -33,7 +33,7 @@ class QSParameters:
 
 @dataclass
 class Relation:
-    """One B-smooth relation f(t) = t^2 - N."""
+    """Одно B-гладкое соотношение f(t) = t^2 - N."""
 
     t: int
     f_value: int
@@ -51,7 +51,7 @@ class Relation:
 
 @dataclass
 class QSTrace:
-    """Data saved for explanation/defense."""
+    """Данные, сохраненные для объяснения/защиты."""
 
     N: int
     parameters: Optional[QSParameters] = None
@@ -76,6 +76,7 @@ def ceil_sqrt(n: int) -> int:
 
 
 def is_square(n: int) -> Tuple[bool, int]:
+    """Проверяет, является ли n полным квадратом."""
     if n < 0:
         return False, 0
     r = math.isqrt(n)
@@ -83,6 +84,7 @@ def is_square(n: int) -> Tuple[bool, int]:
 
 
 def sieve_primes(limit: int) -> List[int]:
+    """Решето Эратосфена: находит все простые числа <= limit."""
     if limit < 2:
         return []
 
@@ -98,7 +100,7 @@ def sieve_primes(limit: int) -> List[int]:
 
 
 def is_probable_prime(n: int) -> bool:
-    """Miller-Rabin primality test. Deterministic for the input sizes used here."""
+    """Тест Миллера-Рабина на простоту. Детерминированный для используемых размеров входных данных."""
     if n < 2:
         return False
     small_bases = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37]
@@ -129,14 +131,14 @@ def is_probable_prime(n: int) -> bool:
 
 def tonelli_shanks(n: int, p: int) -> Optional[int]:
     """
-    Find t such that:
+    Находит t такое, что:
 
         t^2 ≡ n (mod p)
 
-    where p is prime.
+    где p - простое число.
 
-    Return one root t if it exists, otherwise return None.
-    The other root is (-t) % p.
+    Возвращает один корень t, если он существует, иначе None.
+    Другой корень: (-t) % p.
     """
     n %= p
     if n == 0:
@@ -184,7 +186,7 @@ def tonelli_shanks(n: int, p: int) -> Optional[int]:
 
 
 def modular_square_roots_prime(N: int, p: int) -> List[int]:
-    """Roots of x^2 = N (mod p)."""
+    """Корни уравнения x^2 = N (mod p)."""
     if p == 2:
         return [r for r in (0, 1) if (r * r - N) % 2 == 0]
     r = tonelli_shanks(N, p)
@@ -195,11 +197,11 @@ def modular_square_roots_prime(N: int, p: int) -> List[int]:
 
 def estimate_parameters_task1(N: int, multiplier: float = 6.0, max_B: int = 50_000) -> QSParameters:
     """
-    Estimate QS parameters using L(N) = exp(sqrt(ln N * ln ln N)).
+    Оценка параметров QS с использованием L(N) = exp(sqrt(ln N * ln ln N)).
 
-    theoretical_B is a standard simple estimate exp(0.5 * sqrt(ln N ln ln N)).
-    used_B is intentionally larger for this educational Python implementation so that
-    90-100 bit examples usually finish within reasonable time.
+    theoretical_B - стандартная простая оценка exp(0.5 * sqrt(ln N ln ln N)).
+    used_B намеренно больше для данной учебной реализации на Python, чтобы
+    примеры размером 90-100 бит обычно завершались за разумное время.
     """
     if N <= 2:
         raise ValueError("N must be greater than 2")
@@ -220,9 +222,9 @@ def estimate_parameters_task1(N: int, multiplier: float = 6.0, max_B: int = 50_0
 
 def build_factor_base(N: int, B: int) -> Tuple[Optional[int], List[int], Dict[int, List[int]]]:
     """
-    Build factor base: primes p <= B for which N is a quadratic residue mod p.
+    Построение фактор-базы: простые числа p <= B, для которых N является квадратичным вычетом по модулю p.
 
-    Return (small_factor, factor_base, roots_by_prime). If p divides N, small_factor is returned.
+    Возвращает (small_factor, factor_base, roots_by_prime). Если p делит N, возвращается small_factor.
     """
     factor_base: List[int] = []
     roots_by_prime: Dict[int, List[int]] = {}
@@ -239,7 +241,7 @@ def build_factor_base(N: int, B: int) -> Tuple[Optional[int], List[int], Dict[in
 
 
 def factor_over_base(f: int, factor_base: List[int]) -> Tuple[bool, List[int]]:
-    """Exact integer verification that f is B-smooth over factor_base."""
+    """Точная целочисленная проверка того, что f является B-гладким над фактор-базой."""
     f_value = f
     exponents: List[int] = []
 
@@ -257,7 +259,7 @@ def factor_over_base(f: int, factor_base: List[int]) -> Tuple[bool, List[int]]:
 
 
 def exponents_to_row_bits(exponents: List[int]) -> int:
-    """Convert exponent vector to parity bit row over GF(2)."""
+    """Преобразование вектора показателей степеней в битовую строку четности над GF(2)."""
     bits = 0
     for i, exponent in enumerate(exponents):
         if exponent & 1:
@@ -274,10 +276,10 @@ def find_b_smooth_relations_task2(
     threshold: Optional[float] = None,
 ) -> Tuple[List[Relation], int]:
     """
-    Sieve f(t) = t^2 - N for x = ceil(sqrt(N)) + offset ... + offset + length - 1.
+    Просеивание f(t) = t^2 - N для x = ceil(sqrt(N)) + offset ... + offset + length - 1.
 
-    For speed, the sieve subtracts log(p) at roots modulo p. Exact integer division
-    is used afterwards, so false candidates do not affect correctness.
+    Для ускорения решето вычитает log(p) в корнях по модулю p. Точное целочисленное деление
+    используется после, поэтому ложные кандидаты не влияют на корректность.
     """
     if np is None:  # pragma: no cover
         raise RuntimeError(f"NumPy is required for this implementation: {_NUMPY_IMPORT_ERROR}")
@@ -321,9 +323,9 @@ def find_b_smooth_relations_task2(
 
 def find_dependencies_task3(row_bits: Iterable[int]) -> Iterable[int]:
     """
-    Incremental Gaussian elimination over GF(2).
+    Инкрементальное гауссово исключение над GF(2).
 
-    Input rows are bitsets. A yielded integer is a bitset selecting relation rows whose XOR is zero.
+    Входные строки - битовые множества. Возвращаемое целое число - битовое множество, выбирающее строки соотношений, XOR которых равен нулю.
     """
     pivots: Dict[int, Tuple[int, int]] = {}
 
@@ -351,9 +353,9 @@ def try_dependency_task4(
     N: int,
 ) -> Optional[Tuple[int, int, int, int, int, int]]:
     """
-    Given a dependency, build X^2 = Y^2 (mod N) and try gcd.
+    По заданной зависимости построить X^2 = Y^2 (mod N) и попробовать НОД.
 
-    Return (factor, X, Y, used_relations, gcd_minus, gcd_plus) or None.
+    Возвращает (factor, X, Y, used_relations, gcd_minus, gcd_plus) или None.
     """
     X = 1
     exponent_sums = [0] * len(factor_base)
@@ -396,7 +398,7 @@ def quadratic_sieve(
     verbose: bool = True,
     save_json: Optional[str | Path] = None,
 ) -> int:
-    """Return a non-trivial factor of composite N using Quadratic Sieve."""
+    """Возвращает нетривиальный делитель составного числа N с использованием метода Квадратичного решета."""
     if N <= 1:
         raise ValueError("N must be greater than 1")
     if np is None:  # pragma: no cover
@@ -555,7 +557,7 @@ def factor_integer(
     B: Optional[int] = None,
     save_json: Optional[str | Path] = None,
 ) -> List[int]:
-    """Fully factor N recursively. The main non-trivial splitting method is QS."""
+    """Полное рекурсивное разложение N на множители. Основной метод нетривиального разбиения - QS."""
     if N == 1:
         return []
     if is_probable_prime(N):
